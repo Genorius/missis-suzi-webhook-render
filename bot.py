@@ -113,8 +113,7 @@ async def save_review(message: Message, state: FSMContext):
 @router.callback_query(F.data == "support")
 async def support_handler(callback: types.CallbackQuery):
     await callback.message.answer("Напишите, пожалуйста, с чем нужна помощь — я передам всё нашему заботливому специалисту 🤍")
-    await bot.send_message(chat_id=ADMIN_USERNAME, text=f"📬 Клиент обратился в поддержку:
-@{callback.from_user.username or 'нет'} / {callback.from_user.id}")
+    await bot.send_message(chat_id=ADMIN_USERNAME, text="📬 Клиент обратился в поддержку:\n" + message.text)
     await callback.answer()
 
 # Webhook setup
