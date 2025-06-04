@@ -1,16 +1,14 @@
 from aiogram import Bot, Dispatcher, F, Router, types
-from aiogram.types import Message
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram import html
 from aiogram.enums import ParseMode
+from aiogram.filters import Command
+from aiogram.client.default import DefaultBotProperties
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
-import asyncio
-import logging
 import os
 from utils import get_order_by_bot_code_or_phone, get_status_text, get_track_text, get_orders, save_review_to_crm
 from auth_db import save_user_auth, get_order_id_by_user_id
@@ -20,17 +18,16 @@ TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
 PORT = int(os.environ.get("PORT", 3000))
 
-bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
+bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(storage=MemoryStorage())
 router = Router()
 dp.include_router(router)
-
 
 class AuthState(StatesGroup):
     waiting_for_code = State()
     waiting_for_review = State()
 
-@router.message(F.text == "/start")
+@router.message(Command("start"))
 async def start_handler(message: Message, state: FSMContext):
     await message.answer("👋 Привет! Я Missis S’Uzi. Чтобы узнать о вашем заказе — пришлите код или номер телефона 📦")
     await state.set_state(AuthState.waiting_for_code)
@@ -53,26 +50,21 @@ async def process_auth(message: Message, state: FSMContext):
             await message.answer("❌ Увы, я не нашла заказ по этому коду или номеру телефона. Попробуйте ещё раз — я рядом ❤️")
 
 async def notify_admin_about_failed_auth(message: Message):
+    from aiogram import html
     text = f"❗️ Клиент не смог авторизоваться:\n<code>{html.quote(message.text)}</code>\nTelegram: @{message.from_user.username or 'нет'} / {message.from_user.id}"
     await bot.send_message(chat_id=ADMIN_USERNAME, text=text)
 
 @router.callback_query(F.data == "status")
 async def status_handler(callback: types.CallbackQuery):
     order_id = get_order_id_by_user_id(callback.from_user.id)
-    if order_id:
-        text = get_status_text(order_id)
-    else:
-        text = "⚠️ Не найден заказ, попробуйте снова авторизоваться."
+    text = get_status_text(order_id) if order_id else "⚠️ Не найден заказ, попробуйте снова авторизоваться."
     await callback.message.answer(text)
     await callback.answer()
 
 @router.callback_query(F.data == "track")
 async def track_handler(callback: types.CallbackQuery):
     order_id = get_order_id_by_user_id(callback.from_user.id)
-    if order_id:
-        text = get_track_text(order_id)
-    else:
-        text = "⚠️ Не найден заказ, попробуйте снова авторизоваться."
+    text = get_track_text(order_id) if order_id else "⚠️ Не найден заказ, попробуйте снова авторизоваться."
     await callback.message.answer(text)
     await callback.answer()
 
@@ -84,8 +76,7 @@ async def orders_handler(callback: types.CallbackQuery):
 @router.callback_query(F.data.in_(["orders_active", "orders_past"]))
 async def show_orders(callback: types.CallbackQuery):
     active = callback.data == "orders_active"
-    text = get_orders(active=active)
-    await callback.message.answer(text)
+    await callback.message.answer(get_orders(active=active))
     await callback.answer()
 
 @router.callback_query(F.data == "rate")
@@ -113,7 +104,7 @@ async def save_review(message: Message, state: FSMContext):
 @router.callback_query(F.data == "support")
 async def support_handler(callback: types.CallbackQuery):
     await callback.message.answer("Напишите, пожалуйста, с чем нужна помощь — я передам всё нашему заботливому специалисту 🤍")
-    await bot.send_message(chat_id=ADMIN_USERNAME, text="📬 Клиент обратился в поддержку:\n" + message.text)
+    await bot.send_message(chat_id=ADMIN_USERNAME, text="📬 Клиент обратился в поддержку:\n" + callback.message.text)
     await callback.answer()
 
 # Webhook setup
