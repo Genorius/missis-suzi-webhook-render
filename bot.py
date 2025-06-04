@@ -109,7 +109,8 @@ async def support_handler(callback: types.CallbackQuery):
 
 # Webhook setup
 async def on_startup(bot: Bot):
-    webhook_url = "https://missis-suzi-webhook-render.onrender.com/webhook"
+    print("🚀 on_startup вызван")  # добавь это
+    webhook_url = "https://missis-suzi-webhook-final-deploy.onrender.com/webhook"
     await bot.set_webhook(webhook_url)
     print(f"✅ Вебхук установлен: {webhook_url}")
 
