@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: missis-suzi-bot
+    runtime: python
+    repo: https://github.com/Genorius/missis-suzi-webhook-render
+    branch: main
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python bot.py"
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: CRM_API_KEY
+        sync: false
+      - key: CRM_URL
+        sync: false
+      - key: PORT
+        value: 3000
