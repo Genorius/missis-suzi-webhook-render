@@ -7,7 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.client.default import DefaultBotProperties
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
 from aiohttp import web
 import os
 from utils import get_order_by_bot_code_or_phone, get_status_text, get_track_text, get_orders, save_review_to_crm
