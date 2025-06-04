@@ -13,6 +13,7 @@ import os
 from utils import get_order_by_bot_code_or_phone, get_status_text, get_track_text, get_orders, save_review_to_crm
 from auth_db import save_user_auth, get_order_id_by_user_id
 from keyboards import get_main_keyboard, get_orders_keyboard, get_stars_keyboard
+from aiogram import html
 
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
@@ -50,7 +51,6 @@ async def process_auth(message: Message, state: FSMContext):
             await message.answer("❌ Увы, я не нашла заказ по этому коду или номеру телефона. Попробуйте ещё раз — я рядом ❤️")
 
 async def notify_admin_about_failed_auth(message: Message):
-    from aiogram import html
     text = f"❗️ Клиент не смог авторизоваться:\n<code>{html.quote(message.text)}</code>\nTelegram: @{message.from_user.username or 'нет'} / {message.from_user.id}"
     await bot.send_message(chat_id=ADMIN_USERNAME, text=text)
 
